@@ -1,0 +1,7 @@
+invoice_number,issue_date,due_date,vendor,amount,tax_rate,paid,payment_date
+INV-2026-045,2026-04-20,2026-05-02,ABC Corp,8750.00,0,true,2026-05-02
+INV-2026-046,2026-04-28,2026-05-10,XYZ Ltd,5200.00,8.5,true,2026-05-10
+INV-2026-047,2026-05-15,2026-05-28,GHI Partners,6000.00,0,true,2026-05-28
+INV-2026-048,2026-05-18,2026-06-01,JKL Ventures,3400.00,8.5,false,
+INV-2026-049,2026-05-22,2026-06-05,MNO Services,1850.00,0,false,
+INV-2026-050,2026-05-28,2026-06-15,PQR Group,9200.00,10,false,

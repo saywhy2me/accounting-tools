@@ -1,0 +1,16 @@
+date,description,amount,type,reference,vendor
+2026-05-01,Office Rent Payment,2500.00,debit,REF-001,Prime Properties LLC
+2026-05-02,Client Invoice Payment - ABC Corp,8750.00,credit,INV-2026-045,ABC Corp
+2026-05-05,Software Subscription - Accounting Suite,149.99,debit,REF-002,QuickBooks
+2026-05-06,Payroll - May Week 1,12000.00,debit,PAY-001,Internal Payroll
+2026-05-08,Office Supplies Purchase,342.15,debit,REF-003,Staples
+2026-05-10,Client Invoice Payment - XYZ Ltd,5200.00,credit,INV-2026-046,XYZ Ltd
+2026-05-12,Utility Bills - Electricity,218.40,debit,REF-004,City Power Co
+2026-05-13,Sales Revenue - Online,3100.00,credit,REF-005,Stripe
+2026-05-15,Federal Tax Payment Q2,4800.00,debit,TAX-Q2-2026,IRS
+2026-05-15,Salary - Jane Smith,4500.00,debit,PAY-002,Internal Payroll
+2026-05-18,Marketing - Google Ads,950.00,debit,REF-006,Google LLC
+2026-05-20,Client Deposit - DEF Inc,2000.00,credit,DEP-001,DEF Inc
+2026-05-22,Internet & Phone,120.00,debit,REF-007,Comcast Business
+2026-05-25,Bank Transfer to Savings,5000.00,debit,TRF-001,Internal Transfer
+2026-05-28,Consulting Revenue,6000.00,credit,INV-2026-047,GHI Partners
