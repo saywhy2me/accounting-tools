@@ -1,9 +1,10 @@
 """Financial Automation CLI.
 
 Usage:
-  python main.py parse    <csv_file>                          - Parse and summarise transactions
-  python main.py reconcile <source_csv> <ledger_csv>         - Reconcile two transaction files
-  python main.py report   <transactions_csv> [--invoices/-i]  - Generate Excel report
+  python main.py parse     <csv_file>                          - Parse and summarise transactions
+  python main.py reconcile <source_csv> <ledger_csv>          - Reconcile two transaction files
+  python main.py report    <transactions_csv> [--invoices/-i]  - Generate Excel report
+  python main.py dupes     <csv_file>                          - Detect duplicate payments
 """
 
 import sys
@@ -19,6 +20,7 @@ from src.reports.excel_report import generate_report
 from src.models.transaction import Invoice, TransactionType
 from src.utils.currency import format_currency
 from src.utils.validators import validate_transactions
+from src.utils.duplicate_detector import find_duplicates, format_duplicate_report
 
 
 @click.group()
@@ -161,6 +163,39 @@ def report(transactions_csv, invoices_csv, output, report_date):
         click.echo(f"  Invoices      : {len(invoices)}")
         outstanding = [inv for inv in invoices if not inv.paid]
         click.echo(f"  Outstanding   : {len(outstanding)}")
+
+
+# ── dupes ─────────────────────────────────────────────────────────────────────
+
+@cli.command()
+@click.argument("csv_file", type=click.Path(exists=True))
+@click.option("--date-window", default=5, show_default=True,
+              help="Days of tolerance for near-duplicate detection.")
+@click.option("--threshold", default=0.6, show_default=True,
+              help="Minimum description similarity (0-1) for near-duplicate matching.")
+@click.option("--output", "-o", default=None,
+              help="Save plain-text report to this file path.")
+def dupes(csv_file, date_window, threshold, output):
+    """Scan a transaction CSV for duplicate and near-duplicate payments."""
+    click.echo(f"Scanning: {csv_file}")
+    transactions = parse_csv(csv_file)
+    pairs = find_duplicates(transactions,
+                            date_window_days=date_window,
+                            description_threshold=threshold)
+    report = format_duplicate_report(pairs)
+
+    click.echo()
+    click.echo(report)
+
+    if output:
+        Path(output).write_text(report, encoding="utf-8")
+        click.secho(f"\nReport saved to: {output}", fg="cyan")
+
+    if pairs:
+        click.secho(f"\n{len(pairs)} suspected duplicate(s) found — review before payment.", fg="yellow")
+        sys.exit(1)
+    else:
+        click.secho("\nNo duplicates detected.", fg="green")
 
 
 # entry point alias so `python main.py reconcile ...` works
