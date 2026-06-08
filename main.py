@@ -21,7 +21,11 @@ from src.reports.excel_report import generate_report
 from src.models.transaction import Invoice, TransactionType
 from src.utils.currency import format_currency
 from src.utils.validators import validate_transactions
-from src.utils.duplicate_detector import find_duplicates, format_duplicate_report
+from src.utils.duplicate_detector import (
+    find_duplicates,
+    format_duplicate_report,
+    duplicates_to_dict,
+)
 
 
 @click.group()
@@ -182,27 +186,35 @@ def report(transactions_csv, invoices_csv, output, report_date):
 @click.option("--threshold", default=0.6, show_default=True,
               help="Minimum description similarity (0-1) for near-duplicate matching.")
 @click.option("--output", "-o", default=None,
-              help="Save plain-text report to this file path.")
-def dupes(csv_file, date_window, threshold, output):
+              help="Save report to this file path.")
+@click.option("--json", "as_json", is_flag=True, default=False,
+              help="Emit a machine-readable JSON report instead of plain text.")
+def dupes(csv_file, date_window, threshold, output, as_json):
     """Scan a transaction CSV for duplicate and near-duplicate payments."""
-    click.echo(f"Scanning: {csv_file}")
+    if not as_json:
+        click.echo(f"Scanning: {csv_file}")
     transactions = parse_csv(csv_file)
     pairs = find_duplicates(transactions,
                             date_window_days=date_window,
                             description_threshold=threshold)
-    report = format_duplicate_report(pairs)
 
-    click.echo()
+    report = (json.dumps(duplicates_to_dict(pairs), indent=2) if as_json
+              else format_duplicate_report(pairs))
+
+    if not as_json:
+        click.echo()
     click.echo(report)
 
     if output:
         Path(output).write_text(report, encoding="utf-8")
-        click.secho(f"\nReport saved to: {output}", fg="cyan")
+        if not as_json:
+            click.secho(f"\nReport saved to: {output}", fg="cyan")
 
     if pairs:
-        click.secho(f"\n{len(pairs)} suspected duplicate(s) found — review before payment.", fg="yellow")
+        if not as_json:
+            click.secho(f"\n{len(pairs)} suspected duplicate(s) found — review before payment.", fg="yellow")
         sys.exit(1)
-    else:
+    elif not as_json:
         click.secho("\nNo duplicates detected.", fg="green")
 
 

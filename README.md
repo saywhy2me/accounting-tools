@@ -172,7 +172,8 @@ python main.py dupes <csv_file> [OPTIONS]
 |---|---|---|
 | `--date-window` | `5` | Days of tolerance between potential duplicates |
 | `--threshold` | `0.6` | Minimum description similarity (Jaccard) for near-duplicate matching |
-| `--output / -o` | _(none)_ | Save the plain-text report to a file |
+| `--output / -o` | _(none)_ | Save the report to a file |
+| `--json` | _off_ | Emit a machine-readable JSON report (summary + per-pair detail) instead of plain text |
 
 **Detection types:**
 - **Exact** — same date, amount, and description
@@ -305,8 +306,8 @@ accounting-tools/
 └── tests/
     ├── test_reconciler.py         # 9 tests
     ├── test_excel_report.py       # 7 tests
-    ├── test_cli.py                # 9 tests
-    └── test_duplicate_detector.py # 9 tests
+    ├── test_cli.py                # 11 tests
+    └── test_duplicate_detector.py # 11 tests
 ```
 
 ---

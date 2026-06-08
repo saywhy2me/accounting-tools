@@ -6,7 +6,7 @@ from datetime import date
 from decimal import Decimal
 
 from src.models.transaction import Transaction, TransactionType
-from src.utils.duplicate_detector import find_duplicates, DupeKind
+from src.utils.duplicate_detector import find_duplicates, duplicates_to_dict, DupeKind
 
 
 def make_txn(d, desc, amount, ttype=TransactionType.DEBIT):
@@ -82,6 +82,29 @@ def test_amount_at_risk_calculated():
     assert result[0].amount == Decimal("750")
 
 
+def test_duplicates_to_dict_is_json_serialisable():
+    import json
+
+    a = make_txn("2026-05-01", "Vendor Payment", 500)
+    b = make_txn("2026-05-01", "Vendor Payment", 500)
+    payload = duplicates_to_dict(find_duplicates([a, b]))
+    json.loads(json.dumps(payload))  # raises if any Decimal/date left unserialised
+
+    assert payload["summary"]["exact"] == 1
+    assert payload["summary"]["total"] == 1
+    assert payload["summary"]["amount_at_risk"] == 500.0
+    assert len(payload["duplicates"]) == 1
+    assert payload["duplicates"][0]["kind"] == "exact"
+    assert payload["duplicates"][0]["a"]["amount"] == 500.0
+
+
+def test_duplicates_to_dict_empty_when_no_pairs():
+    payload = duplicates_to_dict([])
+    assert payload["summary"]["total"] == 0
+    assert payload["summary"]["amount_at_risk"] == 0.0
+    assert payload["duplicates"] == []
+
+
 if __name__ == "__main__":
     tests = [
         test_exact_duplicate_detected,
@@ -93,6 +116,8 @@ if __name__ == "__main__":
         test_multiple_duplicates_all_detected,
         test_no_false_positive_clean_data,
         test_amount_at_risk_calculated,
+        test_duplicates_to_dict_is_json_serialisable,
+        test_duplicates_to_dict_empty_when_no_pairs,
     ]
     passed = 0
     for t in tests:

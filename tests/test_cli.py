@@ -66,6 +66,30 @@ def test_reconcile_json_output_file_is_parseable():
         json.loads(Path(out).read_text(encoding="utf-8"))  # raises if malformed
 
 
+def test_dupes_json_clean_data_is_valid():
+    result = runner.invoke(cli, ["dupes", TRANSACTIONS, "--json"])
+    assert result.exit_code == 0            # sample has no duplicates
+    payload = json.loads(result.output)
+    assert payload["summary"]["total"] == 0
+    assert payload["duplicates"] == []
+
+
+def test_dupes_json_flags_duplicate():
+    with tempfile.TemporaryDirectory() as tmp:
+        csv = Path(tmp) / "dupes.csv"
+        csv.write_text(
+            "date,description,amount,type\n"
+            "2026-05-01,Vendor Payment,500.00,debit\n"
+            "2026-05-01,Vendor Payment,500.00,debit\n",
+            encoding="utf-8",
+        )
+        result = runner.invoke(cli, ["dupes", str(csv), "--json"])
+        assert result.exit_code == 1        # duplicates found → non-zero exit
+        payload = json.loads(result.output)
+        assert payload["summary"]["total"] == 1
+        assert payload["duplicates"][0]["kind"] == "exact"
+
+
 def test_report_creates_xlsx():
     with tempfile.TemporaryDirectory() as tmp:
         out = str(Path(tmp) / "report.xlsx")
@@ -93,6 +117,8 @@ if __name__ == "__main__":
         test_reconcile_saves_output_file,
         test_reconcile_json_is_valid_and_structured,
         test_reconcile_json_output_file_is_parseable,
+        test_dupes_json_clean_data_is_valid,
+        test_dupes_json_flags_duplicate,
         test_report_creates_xlsx,
         test_report_with_invoices,
     ]

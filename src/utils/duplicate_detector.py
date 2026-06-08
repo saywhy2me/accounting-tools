@@ -37,6 +37,17 @@ class DuplicatePair:
             f"{self.a.description[:35]} / {self.b.description[:35]}"
         )
 
+    def to_dict(self) -> dict:
+        """JSON-serialisable view of the suspected duplicate pair."""
+        return {
+            "kind": self.kind.value,
+            "similarity": round(self.similarity, 4),
+            "date_diff_days": self.date_diff_days,
+            "amount": float(self.amount),
+            "a": self.a.to_dict(),
+            "b": self.b.to_dict(),
+        }
+
 
 def _jaccard(a: str, b: str) -> float:
     ta, tb = set(a.lower().split()), set(b.lower().split())
@@ -95,6 +106,20 @@ def find_duplicates(
                 seen.add((i, j))
 
     return pairs
+
+
+def duplicates_to_dict(pairs: List[DuplicatePair]) -> dict:
+    """Build a JSON-serialisable report: summary counts plus per-pair detail."""
+    amount_at_risk = sum((p.amount for p in pairs), Decimal("0"))
+    return {
+        "summary": {
+            "exact": sum(1 for p in pairs if p.kind == DupeKind.EXACT),
+            "near": sum(1 for p in pairs if p.kind == DupeKind.NEAR),
+            "total": len(pairs),
+            "amount_at_risk": float(amount_at_risk),
+        },
+        "duplicates": [p.to_dict() for p in pairs],
+    }
 
 
 def format_duplicate_report(pairs: List[DuplicatePair]) -> str:
