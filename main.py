@@ -7,6 +7,7 @@ Usage:
   python main.py dupes     <csv_file>                          - Detect duplicate payments
 """
 
+import json
 import sys
 from datetime import date
 from pathlib import Path
@@ -87,25 +88,32 @@ def parse(csv_file, date_col, desc_col, amount_col, type_col, vendor_col, ref_co
 @click.option("--desc-threshold", default=0.4, show_default=True,
               help="Minimum Jaccard similarity for description matching.")
 @click.option("--output", "-o", default=None,
-              help="Save plain-text report to this file path.")
-def reconcile_cmd(source_csv, ledger_csv, date_window, desc_threshold, output):
+              help="Save report to this file path.")
+@click.option("--json", "as_json", is_flag=True, default=False,
+              help="Emit a machine-readable JSON report instead of plain text.")
+def reconcile_cmd(source_csv, ledger_csv, date_window, desc_threshold, output, as_json):
     """Reconcile two transaction CSVs and report discrepancies."""
-    click.echo(f"Source : {source_csv}")
-    click.echo(f"Ledger : {ledger_csv}")
+    if not as_json:
+        click.echo(f"Source : {source_csv}")
+        click.echo(f"Ledger : {ledger_csv}")
 
     source  = parse_csv(source_csv)
     ledger  = parse_csv(ledger_csv)
     result  = reconcile(source, ledger,
                         date_window_days=date_window,
                         description_threshold=desc_threshold)
-    report  = format_reconciliation_report(result)
 
-    click.echo()
+    report = (json.dumps(result.to_dict(), indent=2) if as_json
+              else format_reconciliation_report(result))
+
+    if not as_json:
+        click.echo()
     click.echo(report)
 
     if output:
         Path(output).write_text(report, encoding="utf-8")
-        click.secho(f"\nReport saved to: {output}", fg="cyan")
+        if not as_json:
+            click.secho(f"\nReport saved to: {output}", fg="cyan")
 
     if not result.is_balanced:
         sys.exit(1)

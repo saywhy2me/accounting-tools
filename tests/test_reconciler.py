@@ -86,6 +86,25 @@ def test_summary_keys():
     assert "is_balanced" in s
 
 
+def test_to_dict_is_json_serialisable_with_detail():
+    import json
+
+    src = [make_txn("2026-05-15", "Salary Smith", 4500),
+           make_txn("2026-05-20", "Bank Fee", 35)]
+    led = [make_txn("2026-05-15", "Salary Smith", 4200)]  # discrepancy + unmatched src
+    result = reconcile(src, led, description_threshold=0.4)
+
+    payload = result.to_dict()
+    # Round-trips through json without error (no Decimal/date left unserialised).
+    json.loads(json.dumps(payload))
+
+    assert payload["summary"]["is_balanced"] is False
+    assert len(payload["unmatched_source"]) == 1
+    assert payload["unmatched_source"][0]["description"] == "Bank Fee"
+    assert len(payload["discrepancies"]) == 1
+    assert payload["discrepancies"][0]["amount_diff"] == 300.0
+
+
 if __name__ == "__main__":
     tests = [
         test_exact_match,
@@ -96,6 +115,7 @@ if __name__ == "__main__":
         test_amount_discrepancy_via_description,
         test_balanced_reconciliation,
         test_summary_keys,
+        test_to_dict_is_json_serialisable_with_detail,
     ]
     passed = 0
     for t in tests:

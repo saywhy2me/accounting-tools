@@ -87,6 +87,23 @@ class ReconciliationResult:
             "is_balanced": self.is_balanced,
         }
 
+    def to_dict(self) -> dict:
+        """Full JSON-serialisable view: summary plus unmatched and discrepancy detail."""
+        return {
+            "summary": self.summary(),
+            "unmatched_source": [t.to_dict() for t in self.unmatched_source],
+            "unmatched_ledger": [t.to_dict() for t in self.unmatched_ledger],
+            "discrepancies": [
+                {
+                    "source": p.source.to_dict(),
+                    "ledger": p.ledger.to_dict(),
+                    "amount_diff": float(p.amount_diff),
+                    "date_diff_days": p.date_diff_days,
+                }
+                for p in self.discrepancies
+            ],
+        }
+
 
 def _description_similarity(a: str, b: str) -> float:
     """Simple token overlap ratio — no external deps needed."""

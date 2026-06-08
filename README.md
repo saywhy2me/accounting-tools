@@ -119,7 +119,8 @@ python main.py reconcile <source_csv> <ledger_csv> [OPTIONS]
 |---|---|---|
 | `--date-window` | `3` | Days of tolerance for fuzzy date matching |
 | `--desc-threshold` | `0.4` | Minimum description similarity (0–1) for loose matching |
-| `--output / -o` | _(none)_ | Save the plain-text report to a file |
+| `--output / -o` | _(none)_ | Save the report to a file |
+| `--json` | _off_ | Emit a machine-readable JSON report (summary + unmatched + discrepancy detail) instead of plain text — pipe it into other tooling |
 
 **Matching strategy (applied in order):**
 1. **Exact** — same date, amount, and type
@@ -302,9 +303,9 @@ accounting-tools/
 │   ├── sample_ledger.csv          # 16-row ledger sample (with deliberate discrepancy)
 │   └── sample_invoices.csv        # 6-row invoice sample (3 paid, 3 outstanding)
 └── tests/
-    ├── test_reconciler.py         # 8 tests
+    ├── test_reconciler.py         # 9 tests
     ├── test_excel_report.py       # 7 tests
-    ├── test_cli.py                # 7 tests
+    ├── test_cli.py                # 9 tests
     └── test_duplicate_detector.py # 9 tests
 ```
 

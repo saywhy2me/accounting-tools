@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+import json
 import tempfile
 from click.testing import CliRunner
 from main import cli
@@ -47,6 +48,24 @@ def test_reconcile_saves_output_file():
         assert "BANK RECONCILIATION" in Path(out).read_text()
 
 
+def test_reconcile_json_is_valid_and_structured():
+    result = runner.invoke(cli, ["reconcile", TRANSACTIONS, LEDGER, "--json"])
+    assert result.exit_code == 1            # still flags out-of-balance
+    payload = json.loads(result.output)     # output is pure JSON, no preamble
+    assert payload["summary"]["is_balanced"] is False
+    assert "unmatched_source" in payload
+    assert "unmatched_ledger" in payload
+    assert isinstance(payload["discrepancies"], list)
+
+
+def test_reconcile_json_output_file_is_parseable():
+    with tempfile.TemporaryDirectory() as tmp:
+        out = str(Path(tmp) / "recon.json")
+        runner.invoke(cli, ["reconcile", TRANSACTIONS, LEDGER, "--json", "-o", out])
+        assert Path(out).exists()
+        json.loads(Path(out).read_text(encoding="utf-8"))  # raises if malformed
+
+
 def test_report_creates_xlsx():
     with tempfile.TemporaryDirectory() as tmp:
         out = str(Path(tmp) / "report.xlsx")
@@ -72,6 +91,8 @@ if __name__ == "__main__":
         test_reconcile_detects_imbalance,
         test_reconcile_reports_discrepancy,
         test_reconcile_saves_output_file,
+        test_reconcile_json_is_valid_and_structured,
+        test_reconcile_json_output_file_is_parseable,
         test_report_creates_xlsx,
         test_report_with_invoices,
     ]
